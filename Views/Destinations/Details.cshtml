@@ -1,0 +1,582 @@
+@model TravelRecommendationSystem.Models.Destination
+@{
+    ViewData["Title"] = Model.Name;
+    var relatedDestinations = ViewBag.RelatedDestinations as List<TravelRecommendationSystem.Models.Destination> ?? new List<TravelRecommendationSystem.Models.Destination>();
+}
+
+@functions {
+    string GetDestinationImage(TravelRecommendationSystem.Models.Destination destination)
+    {
+        if (!string.IsNullOrWhiteSpace(destination.ImageUrl))
+        {
+            return destination.ImageUrl;
+        }
+        
+        // Special fallback for Paris
+        if (destination.Name.Equals("Paris", StringComparison.OrdinalIgnoreCase))
+        {
+            return "https://images.unsplash.com/photo-1502602898536-47ad22581b52?w=1200&h=400&fit=crop&crop=center";
+        }
+        
+        // Generic fallback
+        return $"https://source.unsplash.com/featured/1200x400/?{Uri.EscapeDataString(destination.Name)}";
+    }
+}
+
+<div class="container-fluid">
+    <!-- Hero Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="position-relative">
+                <img src="@GetDestinationImage(Model)" 
+                     class="img-fluid w-100 rounded-3" 
+                     alt="@Model.Name"
+                     style="height: 400px; object-fit: cover;" 
+                     onerror="this.src='https://images.unsplash.com/photo-1502602898536-47ad22581b52?w=1200&h=400&fit=crop&crop=center'"
+                     />
+                
+                <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-end"
+                     style="background: linear-gradient(transparent, rgba(0,0,0,0.7)); border-radius: 0.375rem;">
+                    <div class="p-4 text-white w-100">
+                        <div class="d-flex justify-content-between align-items-end">
+                            <div>
+                                <h1 class="display-5 fw-bold mb-2">@Model.Name</h1>
+                                <p class="fs-5 mb-2">
+                                    <i class="bi bi-geo-alt"></i> @Model.Country
+                                    @if (!string.IsNullOrEmpty(Model.Region))
+                                    {
+                                        <text>, @Model.Region</text>
+                                    }
+                                </p>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="rating">
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            if (i <= Math.Floor((double)Model.AverageRating))
+                                            {
+                                                <i class="bi bi-star-fill text-warning"></i>
+                                            }
+                                            else if (i - 0.5 <= (double)Model.AverageRating)
+                                            {
+                                                <i class="bi bi-star-half text-warning"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-star text-warning"></i>
+                                            }
+                                        }
+                                        <span class="ms-2">@Model.AverageRating (@Model.TotalReviews reviews)</span>
+                                    </div>
+                                    <div class="price-level">
+                                        @for (int i = 1; i <= 4; i++)
+                                        {
+                                            if (i <= (int)Model.AveragePriceLevel)
+                                            {
+                                                <span class="text-warning fw-bold fs-4">$</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted fs-4">$</span>
+                                            }
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex gap-2">
+                                @if (User.Identity!.IsAuthenticated)
+                                {
+                                    <button class="btn btn-outline-light favorite-btn" 
+                                            data-destination-id="@Model.Id"
+                                            title="Add to favorites">
+                                        <i class="bi bi-heart"></i>
+                                    </button>
+                                    <a asp-controller="Bookings" asp-action="Create" asp-route-destinationId="@Model.Id" 
+                                       class="btn btn-success btn-lg">
+                                        <i class="bi bi-calendar-plus"></i> Book Now
+                                    </a>
+                                }
+                                else
+                                {
+                                    <a asp-area="Identity" asp-page="/Account/Login" 
+                                       class="btn btn-success btn-lg">
+                                        <i class="bi bi-box-arrow-in-right"></i> Login to Book
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Description -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h3 class="card-title">About @Model.Name</h3>
+                    <p class="card-text">@Model.Description</p>
+                    
+                    <!-- Key Information -->
+                    <div class="row">
+                        @if (!string.IsNullOrEmpty(Model.Climate))
+                        {
+                            <div class="col-md-6 mb-3">
+                                <h6><i class="bi bi-thermometer-half text-primary"></i> Climate</h6>
+                                <p class="text-muted mb-0">@Model.Climate</p>
+                            </div>
+                        }
+                        
+                        @if (!string.IsNullOrEmpty(Model.BestTimeToVisit))
+                        {
+                            <div class="col-md-6 mb-3">
+                                <h6><i class="bi bi-calendar-event text-primary"></i> Best Time to Visit</h6>
+                                <p class="text-muted mb-0">@Model.BestTimeToVisit</p>
+                            </div>
+                        }
+                    </div>
+                    
+                    <!-- Tags -->
+                    @if (Model.Tags != null && Model.Tags.Any())
+                    {
+                        <div class="mt-3">
+                            <h6>Categories</h6>
+                            <div class="d-flex gap-2 flex-wrap">
+                                @foreach (var tag in Model.Tags)
+                                {
+                                    <a href="@Url.Action("ByTag", "Destinations", new { tag = tag.TagName })" 
+                                       class="badge bg-primary text-decoration-none">@tag.TagName</a>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Attractions -->
+            @if (Model.Attractions != null && Model.Attractions.Any())
+            {
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4 class="mb-0"><i class="bi bi-map"></i> Top Attractions</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            @foreach (var attraction in Model.Attractions.Take(6))
+                            {
+                                <div class="col-md-6 mb-3">
+                                    <div class="d-flex">
+                                        @if (!string.IsNullOrEmpty(attraction.ImageUrl))
+                                        {
+                                            <img src="@attraction.ImageUrl" 
+                                                 class="me-3 rounded" 
+                                                 alt="@attraction.Name"
+                                                 style="width: 80px; height: 60px; object-fit: cover;" />
+                                        }
+                                        <div>
+                                            <h6 class="mb-1">@attraction.Name</h6>
+                                            <small class="text-muted">@attraction.Description.Substring(0, Math.Min(80, attraction.Description.Length))...</small>
+                                            
+                                            @if (attraction.AverageRating > 0)
+                                            {
+                                                <div class="mt-1">
+                                                    @for (int i = 1; i <= 5; i++)
+                                                    {
+                                                        if (i <= Math.Floor((double)attraction.AverageRating))
+                                                        {
+                                                            <i class="bi bi-star-fill text-warning small"></i>
+                                                        }
+                                                        else
+                                                        {
+                                                            <i class="bi bi-star text-muted small"></i>
+                                                        }
+                                                    }
+                                                    <small class="text-muted">@attraction.AverageRating</small>
+                                                </div>
+                                            }
+                                            
+                                            @if (attraction.EntryFee.HasValue && attraction.EntryFee > 0)
+                                            {
+                                                <div class="mt-1">
+                                                    <small class="badge bg-light text-dark">$@attraction.EntryFee</small>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Reviews -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0"><i class="bi bi-chat-left-text"></i> Reviews (@Model.TotalReviews)</h4>
+                    @if (User.Identity!.IsAuthenticated)
+                    {
+                        <a asp-controller="Reviews" asp-action="Create" asp-route-destinationId="@Model.Id"
+                           class="btn btn-primary btn-sm">
+                            <i class="bi bi-plus"></i> Write Review
+                        </a>
+                    }
+                </div>
+                <div class="card-body">
+                    @if (Model.Reviews != null && Model.Reviews.Any())
+                    {
+                        @foreach (var review in Model.Reviews.Take(5))
+                        {
+                            <div class="review-item border-bottom pb-3 mb-3">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3">
+                                            @if (!string.IsNullOrEmpty(review.User?.ProfilePictureUrl))
+                                            {
+                                                <img src="@review.User.ProfilePictureUrl" 
+                                                     class="rounded-circle" 
+                                                     alt="@review.User.FullName"
+                                                     style="width: 40px; height: 40px; object-fit: cover;" />
+                                            }
+                                            else
+                                            {
+                                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
+                                                     style="width: 40px; height: 40px;">
+                                                    @(review.User?.FirstName?.Substring(0, 1) ?? "U")
+                                                </div>
+                                            }
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0">@(review.User?.FullName ?? "Anonymous")</h6>
+                                            <div class="rating">
+                                                @for (int i = 1; i <= 5; i++)
+                                                {
+                                                    if (i <= review.Rating)
+                                                    {
+                                                        <i class="bi bi-star-fill text-warning small"></i>
+                                                    }
+                                                    else
+                                                    {
+                                                        <i class="bi bi-star text-muted small"></i>
+                                                    }
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">@review.CreatedAt.ToString("MMM dd, yyyy")</small>
+                                </div>
+                                
+                                <h6>@review.Title</h6>
+                                <p class="text-muted mb-2">@review.Content</p>
+                                
+                                @if (!string.IsNullOrEmpty(review.ImageUrl))
+                                {
+                                    <img src="@review.ImageUrl" 
+                                         class="img-thumbnail mb-2" 
+                                         alt="Review image"
+                                         style="max-width: 200px; max-height: 150px; object-fit: cover;" />
+                                }
+                                
+                                <div class="d-flex justify-content-between align-items-center">
+                                    @if (review.VisitDate.HasValue)
+                                    {
+                                        <small class="text-muted">
+                                            <i class="bi bi-calendar"></i> Visited: @review.VisitDate.Value.ToString("MMM yyyy")
+                                        </small>
+                                    }
+                                    else
+                                    {
+                                        <div></div>
+                                    }
+                                    
+                                    @if (User.Identity!.IsAuthenticated)
+                                    {
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-success helpful-btn" 
+                                                    data-review-id="@review.Id" 
+                                                    data-helpful="true">
+                                                <i class="bi bi-hand-thumbs-up"></i> @review.HelpfulVotes
+                                            </button>
+                                            <button class="btn btn-outline-danger helpful-btn" 
+                                                    data-review-id="@review.Id" 
+                                                    data-helpful="false">
+                                                <i class="bi bi-hand-thumbs-down"></i>
+                                            </button>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                        
+                        @if (Model.TotalReviews > 5)
+                        {
+                            <div class="text-center">
+                                <p class="text-muted">Showing 5 of @Model.TotalReviews reviews</p>
+                                <button class="btn btn-outline-primary" id="loadMoreReviews">
+                                    <i class="bi bi-arrow-down"></i> Load More Reviews
+                                </button>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="bi bi-chat-left-text display-4 text-muted mb-3"></i>
+                            <h5>No reviews yet</h5>
+                            <p class="text-muted">Be the first to share your experience!</p>
+                            @if (User.Identity!.IsAuthenticated)
+                            {
+                                <a asp-controller="Reviews" asp-action="Create" asp-route-destinationId="@Model.Id"
+                                   class="btn btn-primary">
+                                    <i class="bi bi-plus"></i> Write First Review
+                                </a>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Quick Info -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Quick Info</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6 text-center border-end">
+                            <div class="rating mb-1">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    if (i <= Math.Floor((double)Model.AverageRating))
+                                    {
+                                        <i class="bi bi-star-fill text-warning"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-star text-muted"></i>
+                                    }
+                                }
+                            </div>
+                            <h4 class="text-primary mb-0">@Model.AverageRating</h4>
+                            <small class="text-muted">Rating</small>
+                        </div>
+                        <div class="col-6 text-center">
+                            <div class="price-level mb-1">
+                                @for (int i = 1; i <= 4; i++)
+                                {
+                                    if (i <= (int)Model.AveragePriceLevel)
+                                    {
+                                        <span class="text-success fw-bold">$</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">$</span>
+                                    }
+                                }
+                            </div>
+                            <h6 class="text-success mb-0">
+                                @switch ((int)Model.AveragePriceLevel)
+                                {
+                                    case 1: <text>Budget</text>; break;
+                                    case 2: <text>Mid-range</text>; break;
+                                    case 3: <text>Luxury</text>; break;
+                                    case 4: <text>Premium</text>; break;
+                                }
+                            </h6>
+                            <small class="text-muted">Price Level</small>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Total Reviews:</span>
+                        <strong>@Model.TotalReviews</strong>
+                    </div>
+                    
+                    @if (Model.Attractions != null && Model.Attractions.Any())
+                    {
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Attractions:</span>
+                            <strong>@Model.Attractions.Count()</strong>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Map -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-geo-alt"></i> Location</h5>
+                </div>
+                <div class="card-body">
+                    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+                    <div id="map" class="rounded" style="height: 300px;"></div>
+                    <noscript><small class="text-muted">Enable JavaScript to view the map.</small></noscript>
+                    <div class="mt-2">
+                        <small class="text-muted">@Model.Latitude, @Model.Longitude</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Related Destinations -->
+            @if (relatedDestinations.Any())
+            {
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-compass"></i> You Might Also Like</h5>
+                    </div>
+                    <div class="card-body">
+                        @foreach (var related in relatedDestinations)
+                        {
+                            <div class="d-flex mb-3">
+                                <img src="@(related.ImageUrl ?? "https://via.placeholder.com/80x60")" 
+                                     class="me-3 rounded" 
+                                     alt="@related.Name"
+                                     style="width: 80px; height: 60px; object-fit: cover;" />
+                                <div>
+                                    <h6 class="mb-1">
+                                        <a asp-action="Details" asp-route-id="@related.Id" 
+                                           class="text-decoration-none">@related.Name</a>
+                                    </h6>
+                                    <small class="text-muted">@related.Country</small>
+                                    <div class="rating mt-1">
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            if (i <= Math.Floor((double)related.AverageRating))
+                                            {
+                                                <i class="bi bi-star-fill text-warning small"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-star text-muted small"></i>
+                                            }
+                                        }
+                                        <small class="text-muted">@related.AverageRating</small>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Favorite functionality
+            $('.favorite-btn').click(function() {
+                const button = $(this);
+                const destinationId = button.data('destination-id');
+                const icon = button.find('i');
+                
+                $.post('@Url.Action("ToggleFavorite", "User")', { destinationId: destinationId })
+                    .done(function(data) {
+                        if (data.success) {
+                            if (data.isFavorite) {
+                                icon.removeClass('bi-heart').addClass('bi-heart-fill text-danger');
+                                button.attr('title', 'Remove from favorites');
+                            } else {
+                                icon.removeClass('bi-heart-fill text-danger').addClass('bi-heart');
+                                button.attr('title', 'Add to favorites');
+                            }
+                            showToast(data.message, data.isFavorite ? 'success' : 'info');
+                        }
+                    })
+                    .fail(function() {
+                        showToast('Please log in to manage favorites', 'warning');
+                    });
+            });
+
+            // Helpful/unhelpful buttons
+            $('.helpful-btn').click(function() {
+                const button = $(this);
+                const reviewId = button.data('review-id');
+                const isHelpful = button.data('helpful') === true;
+                
+                $.post('@Url.Action("MarkHelpful", "Reviews")', { 
+                    reviewId: reviewId, 
+                    isHelpful: isHelpful 
+                })
+                .done(function(data) {
+                    if (data.success) {
+                        // Update helpful count
+                        button.closest('.btn-group').find('[data-helpful="true"]')
+                              .html('<i class="bi bi-hand-thumbs-up"></i> ' + data.helpfulVotes);
+                        showToast('Thanks for your feedback!', 'success');
+                    }
+                })
+                .fail(function() {
+                    showToast('Please log in to vote on reviews', 'warning');
+                });
+            });
+        });
+
+        // Initialize Leaflet map
+        (function initMap() {
+            try {
+                const lat = parseFloat('@Model.Latitude'.replace(',', '.'));
+                const lng = parseFloat('@Model.Longitude'.replace(',', '.'));
+                if (!isNaN(lat) && !isNaN(lng) && document.getElementById('map')) {
+                    const map = L.map('map').setView([lat, lng], 12);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 19,
+                        attribution: '&copy; OpenStreetMap contributors'
+                    }).addTo(map);
+                    L.marker([lat, lng]).addTo(map).bindPopup(`@Model.Name`).openPopup();
+                }
+            } catch (e) {
+                console.warn('Map init failed', e);
+            }
+        })();
+
+        function showToast(message, type) {
+            const toast = $(`
+                <div class="toast align-items-center text-white bg-${type} border-0 position-fixed" style="top: 20px; right: 20px; z-index: 1050;" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">${message}</div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `);
+            
+            $('body').append(toast);
+            const bsToast = new bootstrap.Toast(toast[0]);
+            bsToast.show();
+            
+            toast.on('hidden.bs.toast', function() {
+                toast.remove();
+            });
+        }
+    </script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+}
+
+<style>
+    .favorite-btn:hover {
+        transform: scale(1.1);
+    }
+
+    .review-item:last-child {
+        border-bottom: none !important;
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+    }
+
+    .rating i {
+        font-size: 0.9rem;
+    }
+
+    .helpful-btn {
+        border-radius: 50px;
+    }
+</style>

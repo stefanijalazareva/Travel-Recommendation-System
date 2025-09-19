@@ -1,0 +1,162 @@
+@model TravelRecommendationSystem.Models.UserPreferences
+@{
+    ViewData["Title"] = "Travel Preferences";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-cog me-2"></i>
+                        Travel Preferences
+                    </h4>
+                    <p class="mb-0 mt-2">Tell us about your travel style to get better recommendations</p>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Preferences" method="post">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="PreferredBudget" class="form-label">Preferred Budget Level</label>
+                                <select asp-for="PreferredBudget" class="form-select">
+                                    <option value="">Select budget level</option>
+                                    <option value="1">Budget ($)</option>
+                                    <option value="2">Mid-range ($$)</option>
+                                    <option value="3">Luxury ($$$)</option>
+                                    <option value="4">Premium ($$$$)</option>
+                                </select>
+                                <span asp-validation-for="PreferredBudget" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="PreferredClimate" class="form-label">Preferred Climate</label>
+                                <select asp-for="PreferredClimate" class="form-select">
+                                    <option value="">Select climate</option>
+                                    <option value="Tropical">Tropical</option>
+                                    <option value="Temperate">Temperate</option>
+                                    <option value="Continental">Continental</option>
+                                    <option value="Mediterranean">Mediterranean</option>
+                                    <option value="Oceanic">Oceanic</option>
+                                    <option value="Arctic">Arctic</option>
+                                </select>
+                                <span asp-validation-for="PreferredClimate" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="PreferredTripDuration" class="form-label">Preferred Trip Duration (Days)</label>
+                                <select asp-for="PreferredTripDuration" class="form-select">
+                                    <option value="">Select duration</option>
+                                    <option value="1">1 day</option>
+                                    <option value="2">2-3 days</option>
+                                    <option value="5">4-7 days</option>
+                                    <option value="10">1-2 weeks</option>
+                                    <option value="21">2-4 weeks</option>
+                                    <option value="30">1+ months</option>
+                                </select>
+                                <span asp-validation-for="PreferredTripDuration" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="PreferredGroupSize" class="form-label">Preferred Group Size</label>
+                                <select asp-for="PreferredGroupSize" class="form-select">
+                                    <option value="0">Solo</option>
+                                    <option value="1">Couple</option>
+                                    <option value="2">Family</option>
+                                    <option value="3">Small Group (3-5)</option>
+                                    <option value="4">Large Group (6+)</option>
+                                </select>
+                                <span asp-validation-for="PreferredGroupSize" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="TravelStyle" class="form-label">Travel Style</label>
+                            <select asp-for="TravelStyle" class="form-select">
+                                <option value="0">Budget</option>
+                                <option value="1">Comfort</option>
+                                <option value="2">Luxury</option>
+                                <option value="3">Adventure</option>
+                                <option value="4">Cultural</option>
+                                <option value="5">Relaxed</option>
+                                <option value="6">Balanced</option>
+                            </select>
+                            <span asp-validation-for="TravelStyle" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Interests & Activities</label>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input asp-for="LikesAdventure" class="form-check-input" type="checkbox">
+                                        <label class="form-check-label" asp-for="LikesAdventure">
+                                            <i class="fas fa-mountain me-1"></i> Adventure
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input asp-for="LikesCulture" class="form-check-input" type="checkbox">
+                                        <label class="form-check-label" asp-for="LikesCulture">
+                                            <i class="fas fa-landmark me-1"></i> Culture & History
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input asp-for="LikesBeach" class="form-check-input" type="checkbox">
+                                        <label class="form-check-label" asp-for="LikesBeach">
+                                            <i class="fas fa-umbrella-beach me-1"></i> Beach
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input asp-for="LikesMountains" class="form-check-input" type="checkbox">
+                                        <label class="form-check-label" asp-for="LikesMountains">
+                                            <i class="fas fa-mountain me-1"></i> Mountains
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input asp-for="LikesNightlife" class="form-check-input" type="checkbox">
+                                        <label class="form-check-label" asp-for="LikesNightlife">
+                                            <i class="fas fa-cocktail me-1"></i> Nightlife
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input asp-for="LikesFoodTourism" class="form-check-input" type="checkbox">
+                                        <label class="form-check-label" asp-for="LikesFoodTourism">
+                                            <i class="fas fa-utensils me-1"></i> Food Tourism
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input asp-for="LikesShopping" class="form-check-input" type="checkbox">
+                                        <label class="form-check-label" asp-for="LikesShopping">
+                                            <i class="fas fa-shopping-bag me-1"></i> Shopping
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input asp-for="LikesHistory" class="form-check-input" type="checkbox">
+                                        <label class="form-check-label" asp-for="LikesHistory">
+                                            <i class="fas fa-monument me-1"></i> History
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-controller="User" asp-action="Profile" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Back to Profile
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> Save Preferences
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

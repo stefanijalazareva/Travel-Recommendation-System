@@ -1,0 +1,183 @@
+@{
+    ViewData["Title"] = "Admin - Destination Management";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2><i class="fas fa-cog me-2"></i>Destination Management</h2>
+            <p class="text-muted">Import destinations from external APIs to expand your travel database.</p>
+            
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle me-2"></i>@TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-globe-europe me-2"></i>Import European Destinations</h5>
+                </div>
+                <div class="card-body">
+                    <p>Import destinations from 30+ European countries using the API-Ninjas City API.</p>
+                    
+                    <div class="mb-3">
+                        <h6>Features:</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success me-2"></i>Major cities from all European countries</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Population data and capital city information</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Automatic tag generation based on country</li>
+                            <li><i class="fas fa-check text-success me-2"></i>GPS coordinates for mapping</li>
+                        </ul>
+                    </div>
+                    
+                    <form asp-action="ImportDestinations" method="post">
+                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                            <i class="fas fa-download me-2"></i>Import All European Cities
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-map-marker-alt me-2"></i>Import Specific Country</h5>
+                </div>
+                <div class="card-body">
+                    <p>Import destinations from a specific country of your choice.</p>
+                    
+                    <form asp-action="ImportSpecificCountry" method="post">
+                        <div class="mb-3">
+                            <label for="country" class="form-label">Country Name</label>
+                            <input type="text" class="form-control" id="country" name="country" 
+                                   placeholder="e.g., France, Italy, Spain" required>
+                            <div class="form-text">Enter the full country name in English</div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-outline-info" onclick="previewCountryData()">
+                                <i class="fas fa-eye me-2"></i>Preview Data
+                            </button>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-plus me-2"></i>Import Country
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div id="previewResults" class="mt-3" style="display: none;">
+                        <h6>Preview Results:</h6>
+                        <div id="previewContent" class="bg-light p-3 rounded"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>API Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-api me-2"></i>API-Ninjas City API</h6>
+                            <p class="mb-2">Provides city data including:</p>
+                            <ul class="list-unstyled small">
+                                <li>• City names and countries</li>
+                                <li>• Population statistics</li>
+                                <li>• Capital city indicators</li>
+                                <li>• Latitude and longitude coordinates</li>
+                            </ul>
+                            <a href="https://api-ninjas.com/api/city" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-external-link-alt me-1"></i>API Documentation
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-map me-2"></i>Geoapify Places API</h6>
+                            <p class="mb-2">Provides place data including:</p>
+                            <ul class="list-unstyled small">
+                                <li>• Tourist attractions and landmarks</li>
+                                <li>• Place categories and types</li>
+                                <li>• Detailed location information</li>
+                                <li>• Additional place metadata</li>
+                            </ul>
+                            <a href="https://www.geoapify.com/places-api/" target="_blank" class="btn btn-sm btn-outline-success">
+                                <i class="fas fa-external-link-alt me-1"></i>API Documentation
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-warning mt-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Setup Required:</strong> You need to register for API keys at the above services and update the configuration in <code>DestinationApiService.cs</code>.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function previewCountryData() {
+    const countryInput = document.getElementById('country');
+    const previewResults = document.getElementById('previewResults');
+    const previewContent = document.getElementById('previewContent');
+    
+    const country = countryInput.value.trim();
+    if (!country) {
+        alert('Please enter a country name first.');
+        return;
+    }
+    
+    try {
+        previewContent.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin me-2"></i>Loading preview...</div>';
+        previewResults.style.display = 'block';
+        
+        const response = await fetch(`/Admin/PreviewApiData?country=${encodeURIComponent(country)}`);
+        const data = await response.json();
+        
+        if (data.success && data.cities && data.cities.length > 0) {
+            let html = '<div class="row">';
+            data.cities.forEach(city => {
+                html += `
+                    <div class="col-md-6 mb-2">
+                        <div class="border rounded p-2">
+                            <strong>${city.name}</strong>, ${city.country}<br>
+                            <small class="text-muted">
+                                Population: ${city.population.toLocaleString()}<br>
+                                ${city.isCapital ? '<span class="badge bg-primary">Capital</span>' : ''}
+                                Tags: ${city.tags ? city.tags.join(', ') : 'N/A'}
+                            </small>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            previewContent.innerHTML = html;
+        } else {
+            previewContent.innerHTML = '<div class="text-muted">No cities found or API error occurred.</div>';
+        }
+    } catch (error) {
+        previewContent.innerHTML = '<div class="text-danger">Error loading preview data.</div>';
+        console.error('Preview error:', error);
+    }
+}
+</script>

@@ -1,0 +1,235 @@
+@model TravelRecommendationSystem.ViewModels.UserDashboardViewModel
+
+@{
+    ViewData["Title"] = "My Dashboard";
+}
+
+<!-- Remove extra container since main layout already provides it -->
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2>Welcome back, @Model.User.FirstName!</h2>
+                <p class="text-muted">Manage your travel bookings, reviews, and favorites</p>
+            </div>
+            <div class="user-stats">
+                <span class="badge bg-primary me-2">@Model.BookingsCount Bookings</span>
+                <span class="badge bg-success me-2">@Model.ReviewsCount Reviews</span>
+                <span class="badge bg-info">@Model.FavoritesCount Favorites</span>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <div class="row">
+        <!-- Quick Actions -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a asp-controller="Destinations" asp-action="Index" class="btn btn-outline-primary">
+                            <i class="fas fa-search me-2"></i>Browse Destinations
+                        </a>
+                        <a asp-action="Favorites" class="btn btn-outline-info">
+                            <i class="fas fa-heart me-2"></i>My Favorites
+                        </a>
+                        <a asp-action="Profile" class="btn btn-outline-secondary">
+                            <i class="fas fa-user-cog me-2"></i>Edit Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Bookings -->
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recent Bookings</h5>
+                    <a asp-action="Bookings" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    @if (Model.RecentBookings.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Destination</th>
+                                        <th>Check-in</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var booking in Model.RecentBookings.Take(5))
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    @if (!string.IsNullOrEmpty(booking.Destination.ImageUrl))
+                                                    {
+                                                        <img src="@booking.Destination.ImageUrl" alt="@booking.Destination.Name" 
+                                                             class="rounded me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                                                    }
+                                                    <div>
+                                                        <strong>@booking.Destination.Name</strong>
+                                                        <br><small class="text-muted">@booking.Destination.Country</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>@booking.CheckInDate.ToString("MMM dd, yyyy")</td>
+                                            <td>
+                                                <span class="badge @(booking.Status == BookingStatus.Confirmed ? "bg-success" : 
+                                                                      booking.Status == BookingStatus.Pending ? "bg-warning" : 
+                                                                      booking.Status == BookingStatus.Cancelled ? "bg-danger" : "bg-secondary")">
+                                                    @booking.Status
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <a asp-controller="Bookings" asp-action="Details" asp-route-id="@booking.Id" 
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                @if (booking.Status == BookingStatus.Confirmed && booking.CheckOutDate > DateTime.Now)
+                                                {
+                                                    <a asp-controller="Reviews" asp-action="Create" asp-route-destinationId="@booking.DestinationId" 
+                                                       class="btn btn-sm btn-outline-success ms-1">
+                                                        <i class="fas fa-star"></i>
+                                                    </a>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="fas fa-suitcase-rolling fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No bookings yet</h5>
+                            <p class="text-muted">Start planning your next adventure!</p>
+                            <a asp-controller="Destinations" asp-action="Index" class="btn btn-primary">
+                                <i class="fas fa-search me-2"></i>Browse Destinations
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Recent Reviews -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">My Recent Reviews</h5>
+                    <a asp-action="Reviews" class="btn btn-sm btn-outline-success">View All</a>
+                </div>
+                <div class="card-body">
+                    @if (Model.RecentReviews.Any())
+                    {
+                        @foreach (var review in Model.RecentReviews.Take(3))
+                        {
+                            <div class="review-item @(Model.RecentReviews.Last() != review ? "border-bottom" : "") pb-3 @(Model.RecentReviews.Last() != review ? "mb-3" : "")">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">@review.Title</h6>
+                                        <div class="stars mb-1">
+                                            @for (int i = 1; i <= 5; i++)
+                                            {
+                                                <i class="fas fa-star @(i <= review.Rating ? "text-warning" : "text-muted")"></i>
+                                            }
+                                        </div>
+                                        <small class="text-muted">@review.Destination.Name • @review.CreatedAt.ToString("MMM yyyy")</small>
+                                    </div>
+                                    <div class="helpful-votes">
+                                        <small class="text-success">
+                                            <i class="fas fa-thumbs-up"></i> @review.HelpfulVotes
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center py-3">
+                            <i class="fas fa-star fa-2x text-muted mb-2"></i>
+                            <p class="text-muted mb-0">No reviews yet</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Favorite Destinations -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Favorite Destinations</h5>
+                    <a asp-action="Favorites" class="btn btn-sm btn-outline-info">View All</a>
+                </div>
+                <div class="card-body">
+                    @if (Model.FavoriteDestinations.Any())
+                    {
+                        <div class="row g-2">
+                            @foreach (var destination in Model.FavoriteDestinations.Take(6))
+                            {
+                                <div class="col-6">
+                                    <a asp-controller="Destinations" asp-action="Details" asp-route-id="@destination.Id" 
+                                       class="text-decoration-none">
+                                        <div class="card border-0 shadow-sm favorite-card">
+                                            @if (!string.IsNullOrEmpty(destination.ImageUrl))
+                                            {
+                                                <img src="@destination.ImageUrl" alt="@destination.Name" 
+                                                     class="card-img-top" style="height: 100px; object-fit: cover;">
+                                            }
+                                            <div class="card-body p-2">
+                                                <h6 class="card-title mb-1 small">@destination.Name</h6>
+                                                <small class="text-muted">@destination.Country</small>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-3">
+                            <i class="fas fa-heart fa-2x text-muted mb-2"></i>
+                            <p class="text-muted mb-0">No favorites yet</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+<!-- Remove extra container closing div -->
+
+<style>
+.favorite-card {
+    transition: transform 0.2s;
+}
+
+.favorite-card:hover {
+    transform: translateY(-2px);
+}
+
+.user-stats .badge {
+    font-size: 0.8rem;
+}
+
+.review-item:last-child {
+    border-bottom: none !important;
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+}
+</style>

@@ -1,0 +1,302 @@
+@model IEnumerable<TravelRecommendationSystem.Models.Destination>
+@{
+    ViewData["Title"] = "Personal Recommendations";
+    var preferences = ViewBag.Preferences as TravelRecommendationSystem.Models.UserPreferences;
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="fas fa-compass text-primary me-2"></i>Personal Recommendations</h2>
+                <a asp-controller="User" asp-action="Preferences" class="btn btn-outline-primary">
+                    <i class="fas fa-cog me-1"></i> Update Preferences
+                </a>
+            </div>
+            <p class="text-muted">Destinations tailored to your interests and preferences</p>
+        </div>
+    </div>
+
+    @if (preferences != null)
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-info-circle me-2"></i>Based on your preferences:</h6>
+                    <div class="row">
+                        @if (preferences.PreferredBudget.HasValue)
+                        {
+                            <div class="col-md-3">
+                                <strong>Budget:</strong> @preferences.PreferredBudget.Value.ToString()
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(preferences.PreferredClimate))
+                        {
+                            <div class="col-md-3">
+                                <strong>Climate:</strong> @preferences.PreferredClimate
+                            </div>
+                        }
+                        @if (preferences.PreferredTripDuration.HasValue)
+                        {
+                            <div class="col-md-3">
+                                <strong>Duration:</strong> @preferences.PreferredTripDuration days
+                            </div>
+                        }
+                        <div class="col-md-3">
+                            <strong>Interests:</strong> 
+                            @{
+                                var interests = new List<string>();
+                                if (preferences.LikesAdventure) interests.Add("Adventure");
+                                if (preferences.LikesCulture) interests.Add("Culture");
+                                if (preferences.LikesBeach) interests.Add("Beach");
+                                if (preferences.LikesMountains) interests.Add("Mountains");
+                                if (preferences.LikesNightlife) interests.Add("Nightlife");
+                                if (preferences.LikesFoodTourism) interests.Add("Food");
+                                if (preferences.LikesShopping) interests.Add("Shopping");
+                                if (preferences.LikesHistory) interests.Add("History");
+                            }
+                            @string.Join(", ", interests.Take(3))
+                            @if (interests.Count > 3)
+                            {
+                                <text> and @(interests.Count - 3) more</text>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (Model != null && Model.Any())
+    {
+        <div class="row">
+            @foreach (var destination in Model)
+            {
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card h-100 shadow-sm destination-card">
+                        <div class="position-relative">
+                            <img src="@(GetDestinationImage(destination))" 
+                                 class="card-img-top destination-image" 
+                                 alt="@destination.Name"
+                                 style="height: 250px; object-fit: cover;" />
+                            
+                            @if (destination.IsFeatured)
+                            {
+                                <span class="badge bg-warning position-absolute top-0 start-0 m-2">
+                                    <i class="bi bi-star-fill"></i> Featured
+                                </span>
+                            }
+                            
+                            <button class="btn btn-link position-absolute top-0 end-0 m-2 p-1 favorite-btn" 
+                                    data-destination-id="@destination.Id"
+                                    title="Add to favorites">
+                                <i class="bi bi-heart text-white fs-5"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">@destination.Name</h5>
+                            <p class="text-muted mb-2">
+                                <i class="bi bi-geo-alt"></i> @destination.Country
+                                @if (!string.IsNullOrEmpty(destination.Region))
+                                {
+                                    <text>, @destination.Region</text>
+                                }
+                            </p>
+                            
+                            <p class="card-text flex-grow-1">
+                                @destination.Description.Substring(0, Math.Min(120, destination.Description.Length))@(destination.Description.Length > 120 ? "..." : "")
+                            </p>
+                            
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <div class="rating">
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            if (i <= Math.Floor((double)destination.AverageRating))
+                                            {
+                                                <i class="bi bi-star-fill text-warning"></i>
+                                            }
+                                            else if (i - 0.5 <= (double)destination.AverageRating)
+                                            {
+                                                <i class="bi bi-star-half text-warning"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-star text-muted"></i>
+                                            }
+                                        }
+                                    </div>
+                                    <small class="text-muted">@destination.AverageRating (@destination.TotalReviews reviews)</small>
+                                </div>
+                                
+                                <div class="price-level">
+                                    @for (int i = 1; i <= 4; i++)
+                                    {
+                                        if (i <= (int)destination.AveragePriceLevel)
+                                        {
+                                            <span class="text-success fw-bold">$</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">$</span>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                            
+                            <div class="tags mb-3">
+                                @if (destination.Tags != null && destination.Tags.Any())
+                                {
+                                    @foreach (var tag in destination.Tags.Take(3))
+                                    {
+                                        <span class="badge bg-light text-dark me-1 mb-1">@tag.TagName</span>
+                                    }
+                                }
+                            </div>
+                        </div>
+                        
+                        <div class="card-footer bg-transparent">
+                            <div class="d-flex gap-2">
+                                <a asp-controller="Destinations" asp-action="Details" asp-route-id="@destination.Id" 
+                                   class="btn btn-primary flex-fill">
+                                    <i class="bi bi-info-circle"></i> View Details
+                                </a>
+                                
+                                <a asp-controller="Bookings" asp-action="Create" asp-route-destinationId="@destination.Id" 
+                                   class="btn btn-outline-success">
+                                    <i class="bi bi-calendar-plus"></i> Book
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="fas fa-compass fa-4x text-muted mb-4"></i>
+                    <h4>No Recommendations Yet</h4>
+                    <p class="text-muted mb-4">Set your preferences to get personalized recommendations!</p>
+                    <a asp-controller="User" asp-action="Preferences" class="btn btn-primary btn-lg">
+                        <i class="fas fa-cog me-2"></i> Set Preferences
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@functions {
+    string GetDestinationImage(TravelRecommendationSystem.Models.Destination destination)
+    {
+        if (!string.IsNullOrWhiteSpace(destination.ImageUrl))
+        {
+            return destination.ImageUrl;
+        }
+        
+        // Special fallback for Paris
+        if (destination.Name.Equals("Paris", StringComparison.OrdinalIgnoreCase))
+        {
+            return "https://images.unsplash.com/photo-1502602898536-47ad22581b52?w=400&h=250&fit=crop&crop=center";
+        }
+        
+        // Generic fallback
+        return $"https://source.unsplash.com/featured/400x250/?{Uri.EscapeDataString(destination.Name)}";
+    }
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Favorite functionality
+            $('.favorite-btn').click(function() {
+                const button = $(this);
+                const destinationId = button.data('destination-id');
+                const icon = button.find('i');
+                
+                $.post('@Url.Action("ToggleFavorite", "User")', { destinationId: destinationId })
+                    .done(function(data) {
+                        if (data.success) {
+                            if (data.isFavorite) {
+                                icon.removeClass('bi-heart').addClass('bi-heart-fill text-danger');
+                                button.attr('title', 'Remove from favorites');
+                            } else {
+                                icon.removeClass('bi-heart-fill text-danger').addClass('bi-heart');
+                                button.attr('title', 'Add to favorites');
+                            }
+                            showToast(data.message, data.isFavorite ? 'success' : 'info');
+                        }
+                    })
+                    .fail(function() {
+                        showToast('Please log in to manage favorites', 'warning');
+                    });
+            });
+        });
+
+        function showToast(message, type) {
+            const toast = $(`
+                <div class="toast align-items-center text-white bg-${type} border-0 position-fixed" style="top: 20px; right: 20px; z-index: 1050;" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">${message}</div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `);
+            
+            $('body').append(toast);
+            const bsToast = new bootstrap.Toast(toast[0]);
+            bsToast.show();
+            
+            toast.on('hidden.bs.toast', function() {
+                toast.remove();
+            });
+        }
+    </script>
+}
+
+<style>
+    .destination-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: none;
+    }
+
+    .destination-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
+    }
+
+    .destination-image {
+        transition: transform 0.3s ease;
+    }
+
+    .destination-card:hover .destination-image {
+        transform: scale(1.05);
+    }
+
+    .favorite-btn {
+        background: rgba(0,0,0,0.5);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .favorite-btn:hover {
+        background: rgba(0,0,0,0.7);
+    }
+
+    .rating i {
+        font-size: 0.9rem;
+    }
+
+    .price-level {
+        font-size: 1.1rem;
+    }
+</style>

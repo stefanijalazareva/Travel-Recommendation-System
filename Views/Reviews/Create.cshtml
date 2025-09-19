@@ -1,0 +1,139 @@
+@model TravelRecommendationSystem.Models.Review
+
+@{
+    ViewData["Title"] = "Write a Review";
+    var destinationName = ViewBag.DestinationName as string ?? "Destination";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-star me-2"></i>
+                        Write a Review for @destinationName
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post" enctype="multipart/form-data">
+                        <input type="hidden" asp-for="DestinationId" />
+                        
+                        <div class="mb-3">
+                            <label asp-for="Title" class="form-label">Review Title *</label>
+                            <input asp-for="Title" class="form-control" placeholder="Enter a descriptive title for your review">
+                            <span asp-validation-for="Title" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Overall Rating *</label>
+                            <div class="rating-input">
+                                <div class="stars">
+                                    @for (int i = 5; i >= 1; i--)
+                                    {
+                                        <input type="radio" id="star@(i)" name="Rating" value="@i" />
+                                        <label for="star@(i)" class="star">
+                                            <i class="fas fa-star"></i>
+                                        </label>
+                                    }
+                                </div>
+                                <span class="rating-text ms-3">Please select a rating</span>
+                            </div>
+                            <span asp-validation-for="Rating" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Content" class="form-label">Your Review *</label>
+                            <textarea asp-for="Content" class="form-control" rows="6" 
+                                      placeholder="Share your experience... What did you love? What could be improved?"></textarea>
+                            <div class="form-text">Minimum 10 characters</div>
+                            <span asp-validation-for="Content" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="VisitDate" class="form-label">When did you visit?</label>
+                            <input asp-for="VisitDate" type="date" class="form-control" max="@DateTime.Now.ToString("yyyy-MM-dd")">
+                            <span asp-validation-for="VisitDate" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Add Photos (Optional)</label>
+                            <input type="file" name="reviewImage" class="form-control" accept="image/*" multiple>
+                            <div class="form-text">You can upload multiple images (JPEG, PNG). Max 5MB per image.</div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-controller="Destinations" asp-action="Details" asp-route-id="@Model.DestinationId" 
+                               class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Back to Destination
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-1"></i>Submit Review
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.rating-input {
+    display: flex;
+    align-items: center;
+}
+
+.stars {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+}
+
+.stars input[type="radio"] {
+    display: none;
+}
+
+.star {
+    font-size: 2rem;
+    color: #ddd;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.stars input[type="radio"]:checked ~ label,
+.stars label:hover,
+.stars label:hover ~ label {
+    color: #ffc107;
+}
+
+.rating-text {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ratingInputs = document.querySelectorAll('input[name="Rating"]');
+    const ratingText = document.querySelector('.rating-text');
+    
+    const ratingTexts = {
+        5: 'Excellent! 🌟',
+        4: 'Very Good 👍',
+        3: 'Good 😊',
+        2: 'Fair 😐',
+        1: 'Poor 😔'
+    };
+    
+    ratingInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            ratingText.textContent = ratingTexts[this.value] || 'Please select a rating';
+        });
+    });
+});
+</script>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

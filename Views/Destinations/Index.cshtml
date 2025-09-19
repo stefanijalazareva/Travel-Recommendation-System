@@ -1,0 +1,517 @@
+@model IEnumerable<TravelRecommendationSystem.Models.Destination>
+@{
+    ViewData["Title"] = "Explore Destinations";
+    var searchString = ViewBag.SearchString as string ?? "";
+    var sortBy = ViewBag.SortBy as string ?? "rating";
+    var currentPage = ViewBag.CurrentPage as int? ?? 1;
+    var totalPages = ViewBag.TotalPages as int? ?? 1;
+    var totalItems = ViewBag.TotalItems as int? ?? 0;
+}
+
+@functions {
+    string GetDestinationImage(TravelRecommendationSystem.Models.Destination destination)
+    {
+        if (!string.IsNullOrWhiteSpace(destination.ImageUrl))
+        {
+            return destination.ImageUrl;
+        }
+        
+        // Special fallback for Paris
+        if (destination.Name.Equals("Paris", StringComparison.OrdinalIgnoreCase))
+        {
+            return "https://images.unsplash.com/photo-1502602898536-47ad22581b52?w=400&h=250&fit=crop&crop=center";
+        }
+        
+        // Generic fallback
+        return $"https://source.unsplash.com/featured/400x250/?{Uri.EscapeDataString(destination.Name)}";
+    }
+}
+
+<div class="container-fluid">
+    <!-- Search and Filter Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="bg-light rounded-3 p-4">
+                <div class="row align-items-center">
+                    <div class="col-lg-6">
+                        <h2 class="h4 mb-3">Explore Amazing Destinations</h2>
+                        <form method="get" class="d-flex gap-2">
+                            <div class="input-group flex-grow-1">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" name="searchString" value="@searchString" 
+                                       class="form-control" placeholder="Search destinations, countries, or activities..."
+                                       id="searchInput" />
+                                <input type="hidden" name="sortBy" value="@sortBy" />
+                            </div>
+                            <button type="submit" class="btn btn-primary">Search</button>
+                        </form>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="d-flex justify-content-lg-end align-items-center gap-3 mt-3 mt-lg-0">
+                            <label class="form-label mb-0">Sort by:</label>
+                            <select id="sortSelect" class="form-select" style="width: auto;">
+                                <option value="rating" selected="@(sortBy == "rating" ? "selected" : null)">Highest Rated</option>
+                                <option value="name" selected="@(sortBy == "name" ? "selected" : null)">Name A-Z</option>
+                                <option value="country" selected="@(sortBy == "country" ? "selected" : null)">Country</option>
+                                <option value="price" selected="@(sortBy == "price" ? "selected" : null)">Price (Low to High)</option>
+                            </select>
+                            
+                            <span class="text-muted">
+                                Showing @(Math.Min((currentPage - 1) * ViewBag.PageSize + 1, totalItems)) - @(Math.Min(currentPage * ViewBag.PageSize, totalItems)) of @totalItems destinations
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Category Filter Buttons -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                            <span class="fw-semibold text-muted me-2">Quick Filters:</span>
+                            <button type="button" class="btn btn-outline-primary category-btn @(string.IsNullOrEmpty(ViewBag.SelectedCategory) ? "active" : "")" 
+                                    data-category="">
+                                <i class="fas fa-globe me-1"></i>All
+                            </button>
+                            <button type="button" class="btn btn-outline-success category-btn @(ViewBag.SelectedCategory == "Adventure" ? "active" : "")" 
+                                    data-category="Adventure">
+                                <i class="fas fa-mountain me-1"></i>Adventure
+                            </button>
+                            <button type="button" class="btn btn-outline-info category-btn @(ViewBag.SelectedCategory == "Beach" ? "active" : "")" 
+                                    data-category="Beach">
+                                <i class="fas fa-umbrella-beach me-1"></i>Beach
+                            </button>
+                            <button type="button" class="btn btn-outline-warning category-btn @(ViewBag.SelectedCategory == "Culture" ? "active" : "")" 
+                                    data-category="Culture">
+                                <i class="fas fa-landmark me-1"></i>Culture
+                            </button>
+                            <button type="button" class="btn btn-outline-danger category-btn @(ViewBag.SelectedCategory == "Food" ? "active" : "")" 
+                                    data-category="Food">
+                                <i class="fas fa-utensils me-1"></i>Food
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary category-btn @(ViewBag.SelectedCategory == "Nature" ? "active" : "")" 
+                                    data-category="Nature">
+                                <i class="fas fa-tree me-1"></i>Nature
+                            </button>
+                            <button type="button" class="btn btn-outline-dark category-btn @(ViewBag.SelectedCategory == "Nightlife" ? "active" : "")" 
+                                    data-category="Nightlife">
+                                <i class="fas fa-cocktail me-1"></i>Nightlife
+                            </button>
+                            <button type="button" class="btn btn-outline-purple category-btn @(ViewBag.SelectedCategory == "Romance" ? "active" : "")" 
+                                    data-category="Romance">
+                                <i class="fas fa-heart me-1"></i>Romance
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Popular Tags -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex gap-2 flex-wrap">
+                <span class="text-muted me-2">Popular:</span>
+                <a href="@Url.Action("ByTag", "Destinations", new { tag = "Beach" })" 
+                   class="badge bg-primary text-decoration-none">Beach</a>
+                <a href="@Url.Action("ByTag", "Destinations", new { tag = "Culture" })" 
+                   class="badge bg-success text-decoration-none">Culture</a>
+                <a href="@Url.Action("ByTag", "Destinations", new { tag = "Adventure" })" 
+                   class="badge bg-warning text-dark text-decoration-none">Adventure</a>
+                <a href="@Url.Action("ByTag", "Destinations", new { tag = "Food" })" 
+                   class="badge bg-info text-decoration-none">Food</a>
+                <a href="@Url.Action("ByTag", "Destinations", new { tag = "History" })" 
+                   class="badge bg-secondary text-decoration-none">History</a>
+                <a href="@Url.Action("ByTag", "Destinations", new { tag = "Nightlife" })" 
+                   class="badge bg-dark text-decoration-none">Nightlife</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Destinations Grid -->
+    @if (Model != null && Model.Any())
+    {
+        <div class="row">
+            @foreach (var destination in Model)
+            {
+                <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
+                    <div class="card h-100 shadow-sm destination-card">
+                        <div class="position-relative">
+                            <img src="@(GetDestinationImage(destination))" 
+                                 class="card-img-top destination-image" 
+                                 alt="@destination.Name"
+                                 style="height: 250px; object-fit: cover;" 
+                                 onerror="this.src='https://images.unsplash.com/photo-1502602898536-47ad22581b52?w=400&h=250&fit=crop&crop=center'"
+                                 />
+                            
+                            @if (destination.IsFeatured)
+                            {
+                                <span class="badge bg-warning position-absolute top-0 start-0 m-2">
+                                    <i class="bi bi-star-fill"></i> Featured
+                                </span>
+                            }
+                            
+                            @if (User.Identity!.IsAuthenticated)
+                            {
+                                <button class="btn btn-link position-absolute top-0 end-0 m-2 p-1 favorite-btn" 
+                                        data-destination-id="@destination.Id"
+                                        title="Add to favorites">
+                                    <i class="bi bi-heart text-white fs-5"></i>
+                                </button>
+                            }
+                        </div>
+                        
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">@destination.Name</h5>
+                            <p class="text-muted mb-2">
+                                <i class="bi bi-geo-alt"></i> @destination.Country
+                                @if (!string.IsNullOrEmpty(destination.Region))
+                                {
+                                    <text>, @destination.Region</text>
+                                }
+                            </p>
+                            
+                            <p class="card-text flex-grow-1">
+                                @destination.Description.Substring(0, Math.Min(120, destination.Description.Length))@(destination.Description.Length > 120 ? "..." : "")
+                            </p>
+                            
+                            <!-- Best Time to Visit -->
+                            @if (!string.IsNullOrEmpty(destination.BestTimeToVisit))
+                            {
+                                <div class="mb-2">
+                                    <small class="text-muted">
+                                        <i class="bi bi-calendar-event"></i> Best time: @destination.BestTimeToVisit
+                                    </small>
+                                </div>
+                            }
+                            
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <div class="rating">
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            if (i <= Math.Floor((double)destination.AverageRating))
+                                            {
+                                                <i class="bi bi-star-fill text-warning"></i>
+                                            }
+                                            else if (i - 0.5 <= (double)destination.AverageRating)
+                                            {
+                                                <i class="bi bi-star-half text-warning"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-star text-muted"></i>
+                                            }
+                                        }
+                                    </div>
+                                    <small class="text-muted">@destination.AverageRating (@destination.TotalReviews reviews)</small>
+                                </div>
+                                
+                                <div class="price-level">
+                                    @for (int i = 1; i <= 4; i++)
+                                    {
+                                        if (i <= (int)destination.AveragePriceLevel)
+                                        {
+                                            <span class="text-success fw-bold">$</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">$</span>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                            
+                            <!-- Tags -->
+                            <div class="tags mb-3">
+                                @if (destination.Tags != null && destination.Tags.Any())
+                                {
+                                    @foreach (var tag in destination.Tags.Take(4))
+                                    {
+                                        <a href="@Url.Action("ByTag", "Destinations", new { tag = tag.TagName })" 
+                                           class="badge bg-light text-dark text-decoration-none me-1 mb-1">@tag.TagName</a>
+                                    }
+                                    @if (destination.Tags.Count() > 4)
+                                    {
+                                        <span class="badge bg-light text-muted">+@(destination.Tags.Count() - 4) more</span>
+                                    }
+                                }
+                            </div>
+                            
+                            <!-- Attractions count -->
+                            @if (destination.Attractions != null && destination.Attractions.Any())
+                            {
+                                <div class="mb-3">
+                                    <small class="text-muted">
+                                        <i class="bi bi-map"></i> @destination.Attractions.Count() attractions
+                                    </small>
+                                </div>
+                            }
+                        </div>
+                        
+                        <div class="card-footer bg-transparent">
+                            <div class="d-flex gap-2">
+                                <a asp-controller="Destinations" asp-action="Details" asp-route-id="@destination.Id" 
+                                   class="btn btn-primary flex-fill">
+                                    <i class="bi bi-info-circle"></i> View Details
+                                </a>
+                                
+                                @if (User.Identity!.IsAuthenticated)
+                                {
+                                    <a asp-controller="Bookings" asp-action="Create" asp-route-destinationId="@destination.Id" 
+                                       class="btn btn-outline-success">
+                                        <i class="bi bi-calendar-plus"></i> Book
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Pagination -->
+        @if (totalPages > 1)
+        {
+            <div class="row mt-4">
+                <div class="col-12">
+                    <nav aria-label="Destinations pagination">
+                        <ul class="pagination justify-content-center">
+                            @if (currentPage > 1)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="@Url.Action("Index", new { searchString = searchString, sortBy = sortBy, page = currentPage - 1 })">
+                                        <i class="bi bi-chevron-left"></i> Previous
+                                    </a>
+                                </li>
+                            }
+                            
+                            @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(totalPages, currentPage + 2); i++)
+                            {
+                                <li class="page-item @(i == currentPage ? "active" : "")">
+                                    <a class="page-link" href="@Url.Action("Index", new { searchString = searchString, sortBy = sortBy, page = i })">@i</a>
+                                </li>
+                            }
+                            
+                            @if (currentPage < totalPages)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="@Url.Action("Index", new { searchString = searchString, sortBy = sortBy, page = currentPage + 1 })">
+                                        Next <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <!-- No Results -->
+        <div class="row">
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="bi bi-search display-1 text-muted mb-3"></i>
+                    <h3>No destinations found</h3>
+                    @if (!string.IsNullOrEmpty(searchString))
+                    {
+                        <p class="text-muted">No destinations match your search for "<strong>@searchString</strong>"</p>
+                        <a asp-action="Index" class="btn btn-primary">Browse All Destinations</a>
+                    }
+                    else
+                    {
+                        <p class="text-muted">Try adjusting your search criteria or browse our featured destinations.</p>
+                        <a asp-action="Index" asp-controller="Home" class="btn btn-primary">Back to Home</a>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Sort dropdown change
+            $('#sortSelect').change(function() {
+                var sortBy = $(this).val();
+                var searchString = $('#searchInput').val();
+                window.location.href = '@Url.Action("Index")?searchString=' + encodeURIComponent(searchString) + '&sortBy=' + sortBy;
+            });
+
+            // Favorite functionality
+            $('.favorite-btn').click(function() {
+                const button = $(this);
+                const destinationId = button.data('destination-id');
+                const icon = button.find('i');
+                
+                $.post('@Url.Action("ToggleFavorite", "User")', { destinationId: destinationId })
+                    .done(function(data) {
+                        if (data.success) {
+                            if (data.isFavorite) {
+                                icon.removeClass('bi-heart').addClass('bi-heart-fill text-danger');
+                                button.attr('title', 'Remove from favorites');
+                            } else {
+                                icon.removeClass('bi-heart-fill text-danger').addClass('bi-heart');
+                                button.attr('title', 'Add to favorites');
+                            }
+                            showToast(data.message, data.isFavorite ? 'success' : 'info');
+                        }
+                    })
+                    .fail(function() {
+                        showToast('Please log in to manage favorites', 'warning');
+                    });
+            });
+
+            // Search input autocomplete (simple implementation)
+            $('#searchInput').on('input', function() {
+                var term = $(this).val();
+                if (term.length > 2) {
+                    $.get('@Url.Action("Search", "Destinations")', { term: term })
+                        .done(function(data) {
+                            // You can implement autocomplete dropdown here
+                            console.log('Search suggestions:', data);
+                        });
+                }
+            });
+
+            // Category filter buttons
+            $('.category-btn').click(function() {
+                const button = $(this);
+                const category = button.data('category');
+                const searchString = $('#searchInput').val();
+                const sortBy = $('#sortSelect').val();
+                
+                // Remove active class from all buttons
+                $('.category-btn').removeClass('active');
+                // Add active class to clicked button
+                button.addClass('active');
+                
+                // Build URL with category filter
+                let url = '@Url.Action("Index")';
+                let params = [];
+                
+                if (searchString) {
+                    params.push('searchString=' + encodeURIComponent(searchString));
+                }
+                if (category) {
+                    params.push('category=' + encodeURIComponent(category));
+                }
+                if (sortBy) {
+                    params.push('sortBy=' + encodeURIComponent(sortBy));
+                }
+                
+                if (params.length > 0) {
+                    url += '?' + params.join('&');
+                }
+                
+                window.location.href = url;
+            });
+        });
+
+        function showToast(message, type) {
+            const toast = $(`
+                <div class="toast align-items-center text-white bg-${type} border-0 position-fixed" style="top: 20px; right: 20px; z-index: 1050;" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">${message}</div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `);
+            
+            $('body').append(toast);
+            const bsToast = new bootstrap.Toast(toast[0]);
+            bsToast.show();
+            
+            toast.on('hidden.bs.toast', function() {
+                toast.remove();
+            });
+        }
+    </script>
+}
+
+<style>
+    .destination-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: none;
+    }
+
+    .destination-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
+    }
+
+    .destination-image {
+        transition: transform 0.3s ease;
+    }
+
+    .destination-card:hover .destination-image {
+        transform: scale(1.05);
+    }
+
+    .category-btn {
+        transition: all 0.3s ease;
+        border-radius: 25px;
+        font-weight: 500;
+        padding: 8px 16px;
+    }
+
+    .category-btn.active {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+
+    .btn-outline-purple {
+        color: #6f42c1;
+        border-color: #6f42c1;
+    }
+
+    .btn-outline-purple:hover,
+    .btn-outline-purple.active {
+        color: #fff;
+        background-color: #6f42c1;
+        border-color: #6f42c1;
+    }
+
+    .category-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .favorite-btn {
+        background: rgba(0,0,0,0.5);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .favorite-btn:hover {
+        background: rgba(0,0,0,0.7);
+    }
+
+    .rating i {
+        font-size: 0.9rem;
+    }
+
+    .price-level {
+        font-size: 1.1rem;
+    }
+
+    .badge {
+        font-size: 0.75rem;
+    }
+
+    .pagination .page-link {
+        color: #0d6efd;
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+</style>

@@ -1,0 +1,205 @@
+@model TravelRecommendationSystem.Models.Booking
+
+@{
+    ViewData["Title"] = "Book Your Trip";
+    var destinationName = ViewBag.DestinationName as string ?? "Destination";
+    var destinationImage = ViewBag.DestinationImage as string;
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-calendar-plus me-2"></i>
+                        Book Your Trip to @destinationName
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post">
+                        <input type="hidden" asp-for="DestinationId" />
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="CheckInDate" class="form-label">Check-in Date *</label>
+                                <input asp-for="CheckInDate" type="date" class="form-control" 
+                                       min="@DateTime.Now.ToString("yyyy-MM-dd")" required>
+                                <span asp-validation-for="CheckInDate" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="CheckOutDate" class="form-label">Check-out Date *</label>
+                                <input asp-for="CheckOutDate" type="date" class="form-control" 
+                                       min="@DateTime.Now.AddDays(1).ToString("yyyy-MM-dd")" required>
+                                <span asp-validation-for="CheckOutDate" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Adults" class="form-label">Adults *</label>
+                                <select asp-for="Adults" class="form-select" required>
+                                    <option value="">Select adults</option>
+                                    @for (int i = 1; i <= 10; i++)
+                                    {
+                                        <option value="@i" selected="@(i == 1 ? "selected" : null)">@i Adult@(i > 1 ? "s" : "")</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="Adults" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Children" class="form-label">Children</label>
+                                <select asp-for="Children" class="form-select">
+                                    @for (int i = 0; i <= 8; i++)
+                                    {
+                                        <option value="@i" selected="@(i == 0 ? "selected" : null)">@i Child@(i != 1 ? "ren" : "")</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="Children" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="AccommodationType" class="form-label">Accommodation Type *</label>
+                            <select asp-for="AccommodationType" class="form-select" required>
+                                <option value="">Select accommodation</option>
+                                <option value="Hotel">Hotel</option>
+                                <option value="Resort">Resort</option>
+                                <option value="Apartment">Apartment</option>
+                                <option value="Villa">Villa</option>
+                                <option value="Hostel">Hostel</option>
+                                <option value="Bed & Breakfast">Bed & Breakfast</option>
+                            </select>
+                            <span asp-validation-for="AccommodationType" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="SpecialRequests" class="form-label">Special Requests</label>
+                            <textarea asp-for="SpecialRequests" class="form-control" rows="3" 
+                                      placeholder="Any special requirements, dietary restrictions, accessibility needs, etc."></textarea>
+                            <span asp-validation-for="SpecialRequests" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input asp-for="FlightIncluded" class="form-check-input" type="checkbox">
+                                <label class="form-check-label" asp-for="FlightIncluded">
+                                    Include flight booking assistance
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input asp-for="TransferIncluded" class="form-check-input" type="checkbox">
+                                <label class="form-check-label" asp-for="TransferIncluded">
+                                    Include airport transfer
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="price-summary p-3 bg-light rounded mb-3">
+                            <h6>Price Estimate</h6>
+                            <div class="d-flex justify-content-between">
+                                <span>Base price per night:</span>
+                                <span id="basePrice">$--</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Number of nights:</span>
+                                <span id="numberOfNights">--</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Number of guests:</span>
+                                <span id="numberOfGuests">--</span>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between fw-bold">
+                                <span>Estimated Total:</span>
+                                <span id="estimatedTotal">$--</span>
+                            </div>
+                            <small class="text-muted">*Final price may vary based on availability and specific requirements</small>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-controller="Destinations" asp-action="Details" asp-route-id="@Model.DestinationId" 
+                               class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Back to Destination
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check me-1"></i>Submit Booking Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow">
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(destinationImage))
+                    {
+                        <img src="@destinationImage" alt="@destinationName" class="img-fluid rounded mb-3">
+                    }
+                    <h5>@destinationName</h5>
+                    <p class="text-muted">Complete this form to request a booking. Our team will contact you within 24 hours to confirm details and provide a detailed quote.</p>
+                    
+                    <div class="booking-features">
+                        <h6>What's Included:</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success me-2"></i>Accommodation booking</li>
+                            <li><i class="fas fa-check text-success me-2"></i>24/7 customer support</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Local recommendations</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Free cancellation up to 48h</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkInInput = document.querySelector('input[name="CheckInDate"]');
+    const checkOutInput = document.querySelector('input[name="CheckOutDate"]');
+    const adultsSelect = document.querySelector('select[name="Adults"]');
+    const childrenSelect = document.querySelector('select[name="Children"]');
+    
+    function updatePriceEstimate() {
+        const checkIn = new Date(checkInInput.value);
+        const checkOut = new Date(checkOutInput.value);
+        const adults = parseInt(adultsSelect.value) || 0;
+        const children = parseInt(childrenSelect.value) || 0;
+        
+        if (checkIn && checkOut && checkIn < checkOut && adults > 0) {
+            const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+            const guests = adults + children;
+            const basePrice = 120; // Base price per night - could be dynamic
+            const total = nights * basePrice * Math.max(1, Math.ceil(guests / 2));
+            
+            document.getElementById('basePrice').textContent = '$' + basePrice;
+            document.getElementById('numberOfNights').textContent = nights;
+            document.getElementById('numberOfGuests').textContent = guests;
+            document.getElementById('estimatedTotal').textContent = '$' + total.toLocaleString();
+        }
+    }
+    
+    // Update check-out minimum date when check-in changes
+    checkInInput.addEventListener('change', function() {
+        const checkIn = new Date(this.value);
+        const nextDay = new Date(checkIn);
+        nextDay.setDate(checkIn.getDate() + 1);
+        checkOutInput.min = nextDay.toISOString().split('T')[0];
+        updatePriceEstimate();
+    });
+    
+    checkOutInput.addEventListener('change', updatePriceEstimate);
+    adultsSelect.addEventListener('change', updatePriceEstimate);
+    childrenSelect.addEventListener('change', updatePriceEstimate);
+});
+</script>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
